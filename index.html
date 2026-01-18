@@ -1,0 +1,2433 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>jvisualschool · AI Vibe Coding Dashboard</title>
+  <meta name="description"
+    content="Jinho Jung (jvisualschool) GitHub activity dashboard mockup. Dynamic HTML ready for token-based updates." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Icons (Font Awesome) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+
+  <!-- Chart.js (for language chart) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Obelisk.js (for 3D graph) -->
+  <script src="vendor/isometric-contributions/src/obelisk.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0D1117;
+      --panel: rgba(255, 255, 255, .045);
+      --panel-2: rgba(255, 255, 255, .03);
+      --border: rgba(255, 255, 255, .10);
+      --border-2: rgba(255, 255, 255, .16);
+      --text: #E6EDF3;
+      --muted: #9BA7B4;
+      --gold: #FFD700;
+      --red: #FF6B6B;
+      --blue: #4DA3FF;
+      --green: #39D98A;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .55);
+      --shadow2: 0 10px 30px rgba(0, 0, 0, .45);
+      --radius: 18px;
+      --radius2: 24px;
+      --max: 1120px;
+    }
+
+    /* Light Theme Variables */
+    body.light-theme {
+      --bg: #F6F8FA;
+      /* GitHub Light bg */
+      --panel: #FFFFFF;
+      --panel-2: #F3F4F6;
+      --border: #D0D7DE;
+      --border-2: #D8DEE4;
+      --text: #24292F;
+      --muted: #57606A;
+      --gold: #D29922;
+      /* Darker gold for light mode */
+      --red: #CF222E;
+      --blue: #0969DA;
+      /* --green: #1A7F37;  <-- Removed to allow dynamic theme override */
+      --shadow: 0 8px 24px rgba(140, 149, 159, .2);
+      --shadow2: 0 2px 8px rgba(140, 149, 159, .15);
+    }
+
+    body.light-theme .hero {
+      background: linear-gradient(135deg, #FFFFFF, #F6F8FA) !important;
+    }
+
+    body.light-theme {
+      /* Override complex body gradient */
+      background: #F6F8FA !important;
+    }
+
+    body.light-theme .chart-panel,
+    body.light-theme .card,
+    body.light-theme footer {
+      background: #FFFFFF;
+      border-color: var(--border);
+    }
+
+    body.light-theme .nav {
+      border-bottom-color: var(--border);
+    }
+
+    body.light-theme header {
+      background: rgba(255, 255, 255, .8);
+    }
+
+    body.light-theme .stat-icon {
+      background: #F6F8FA;
+      border-color: var(--border);
+    }
+
+    body.light-theme .btn {
+      background: #F6F8FA;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    body.light-theme .btn:hover {
+      background: #F3F4F6;
+      border-color: var(--border-2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 600px at 85% 15%, rgba(77, 163, 255, .10), transparent 55%),
+        linear-gradient(180deg, var(--bg), #070A0E 60%, #05070B);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Subtle animated noise grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, .06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, .06) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(600px 600px at 40% 10%, #000 30%, transparent 70%);
+      animation: gridFloat 14s ease-in-out infinite;
+    }
+
+    /* Light Theme Specific Overrides */
+    body.light-theme .card,
+    body.light-theme .p-card,
+    body.light-theme .chart-panel,
+    body.light-theme .nav,
+    body.light-theme .iso-stat-box {
+      border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    }
+
+    body.light-theme .stat-icon {
+      border: 1px solid rgba(0, 0, 0, 0.12) !important;
+      background: var(--bg);
+      /* Ensure background is clean */
+    }
+
+    body.light-theme .iso-stat-box {
+      background: rgba(255, 255, 255, 0.9) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Light Theme Tags & Badges: Enhance visibility */
+    body.light-theme .tag,
+    body.light-theme .badge {
+      border: 1px solid rgba(0, 0, 0, 0.15) !important;
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--text);
+    }
+
+    /* Apply theme color to key elements in both modes */
+    .stat-icon i,
+    .kpi i,
+    .badge i,
+    .stat-value span,
+    .iso-stat-item .val,
+    #overlay-stat-avg,
+    .user-details-grid i,
+    .user-details-grid .val {
+      color: var(--green) !important;
+      transition: color 0.3s;
+    }
+
+    /* Specific overrides if needed, but !important above handles most.
+       We remove the forceful black override for icons in light mode so they take the theme color. */
+
+    /*
+    body.light-theme .stat-icon i,
+    body.light-theme .kpi i,
+    body.light-theme .badge i,
+    body.light-theme .fa-star,
+    body.light-theme .fa-fire,
+    body.light-theme .fa-code-branch,
+    body.light-theme .fa-code-commit,
+    body.light-theme .fa-code-fork {
+      color: rgba(0, 0, 0, 0.7) !important;
+    }
+    */
+
+    body.light-theme .btn {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    @keyframes gridFloat {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(10px)
+      }
+    }
+
+    /* Top nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+      background: rgba(13, 17, 23, .65);
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .nav {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .brand .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text);
+      box-shadow: 0 0 10px rgba(255, 255, 255, .2);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: .2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, .22);
+      background: rgba(255, 255, 255, .06);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, .06);
+    }
+
+    main {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 18px 64px;
+      /* Removed top padding (22px -> 0) */
+    }
+
+    /* Section scaffold */
+    section {
+      margin-top: 26px;
+    }
+
+    /* First section (Hero) pull up */
+    .hero {
+      margin-top: 10px !important;
+      /* Reduce margin significantly (original 26px) */
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 0 0 14px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+
+    .section-title .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: linear-gradient(135deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+      box-shadow: var(--shadow);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      opacity: .85;
+      pointer-events: none;
+      filter: blur(0px);
+      mask-image: linear-gradient(#000, transparent 120%);
+    }
+
+    .hero-inner {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .profile-group {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      /* Removed border for dark mode */
+      object-fit: cover;
+      transform: translateZ(0);
+    }
+
+    .avatar-wrap::after {
+      content: none;
+    }
+
+    .avatar-wrap::after {
+      content: none;
+    }
+
+    /* @keyframes spin removed */
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: .2px;
+    }
+
+    .hero .title {
+      margin-top: 6px;
+      color: var(--gold);
+      /* Keep gold accent for title but reduced glow */
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .hero .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .hero-meta {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      /* Removed border for dark mode */
+      background: rgba(255, 255, 255, .04);
+      color: var(--text);
+      font-size: 13px;
+      transition: .18s ease;
+      box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+      user-select: none;
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color .2s;
+    }
+
+    .btn-text:hover {
+      color: var(--text);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, .22);
+      background: rgba(255, 255, 255, .06);
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, .06), 0 10px 30px rgba(0, 0, 0, .35);
+    }
+
+    .btn i {
+      color: var(--text);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px dashed rgba(255, 215, 0, .28);
+      background: rgba(255, 215, 0, .05);
+      color: rgba(255, 215, 0, .92);
+      font-size: 12px;
+      margin-left: auto;
+    }
+
+    /* Cards */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      /* Restore border for dark mode */
+      background: rgba(13, 17, 23, 0.6);
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      min-height: 104px;
+      transform: translateZ(0);
+    }
+
+    .card::before {
+      content: none;
+    }
+
+    .stat-top {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .04);
+      display: grid;
+      place-items: center;
+      /* box-shadow removed */
+    }
+
+    .stat-icon i {
+      color: var(--text);
+      /* Changed from gold to text color */
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .stat-value {
+      margin-top: 10px;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      position: relative;
+    }
+
+    .stat-sub {
+      color: rgba(155, 167, 180, .95);
+      font-size: 12px;
+      margin-top: 6px;
+      position: relative;
+    }
+
+    /* Skeleton */
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .08), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 1.3s infinite;
+    }
+
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .stat-value.loading {
+      color: transparent;
+    }
+
+    .stat-value.loading .skeleton {
+      height: 34px;
+      width: 88px;
+    }
+
+    .stat-sub.loading .skeleton {
+      height: 14px;
+      width: 130px;
+    }
+
+    /* Layout: chart + 3D graph */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 14px;
+    }
+
+    /* Isometric 3D styles adapted for stat.html */
+    .iso-stage {
+      position: relative;
+      min-height: 480px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .iso-overlay-group {
+      position: absolute;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .iso-stat-box {
+      background: rgba(13, 17, 23, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      gap: 32px;
+      box-shadow: var(--shadow2);
+    }
+
+    .iso-overlay-group .group-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .iso-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .iso-stat-item .val {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--green);
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .iso-stat-item .unit {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .iso-stat-item .lbl {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    .iso-stat-item .date {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .iso-avg-text {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 8px;
+    }
+
+    .iso-avg-text strong {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .iso-overlay-top-right {
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .iso-overlay-bottom-left {
+      bottom: 20px;
+      left: 20px;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(13, 17, 23, 0.95);
+      /* Use high opacity dark background */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      /* Force white text in dark mode tooltip */
+      transform: translate(-50%, calc(-100% - 12px));
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .1s ease, transform .1s ease;
+      z-index: 1000;
+    }
+
+    body.light-theme .tooltip {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #24292f;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .chart-wrap {
+      padding: 16px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .chart-panel {
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02));
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      min-height: 260px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* For Chart.js height stability */
+    .chart-canvas-wrap {
+      height: 240px;
+      position: relative;
+    }
+
+    /* Heatmap */
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 6px;
+      padding-top: 6px;
+    }
+
+    .cell {
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px) scale(1.03);
+      border-color: rgba(255, 215, 0, .30);
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .legend .swatches {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .sw {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, .10);
+    }
+
+    /* Featured projects */
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      perspective: 900px;
+    }
+
+    .p-card {
+      position: relative;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02));
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      min-height: 172px;
+      transform-style: preserve-3d;
+      transition: transform .12s ease, border-color .2s ease, box-shadow .2s ease;
+      overflow: hidden;
+    }
+
+    .p-card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      /* background: radial-gradient(600px 240px at 20% 0%, rgba(255, 215, 0, .16), transparent 60%); */
+      opacity: .6;
+      pointer-events: none;
+    }
+
+    .p-title {
+      position: relative;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .p-desc {
+      position: relative;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      min-height: 56px;
+    }
+
+    .tags {
+      position: relative;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: rgba(255, 255, 255, .04);
+      color: var(--text);
+    }
+
+    .p-meta {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .p-meta .kpi {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .p-meta i {
+      color: rgba(255, 215, 0, .85);
+    }
+
+    .p-card:hover {
+      border-color: rgba(255, 215, 0, .28);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .55);
+    }
+
+    /* Tech stack floating badges */
+    .stack {
+      position: relative;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255, 255, 255, .10);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .02));
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .stack::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: rgba(255, 255, 255, 0.02);
+      /*
+      background:
+        radial-gradient(900px 260px at 10% 0%, rgba(255, 215, 0, .18), transparent 60%),
+        radial-gradient(700px 280px at 90% 20%, rgba(77, 163, 255, .14), transparent 60%);
+      */
+      opacity: .70;
+      pointer-events: none;
+    }
+
+    .badge-cloud {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .04);
+      color: var(--text);
+      font-size: 13px;
+      user-select: none;
+      animation: floaty 6s ease-in-out infinite;
+      will-change: transform;
+      text-decoration: none;
+      transition: all .2s ease;
+    }
+
+    .badge:hover {
+      border-color: rgba(255, 255, 255, .3);
+      background: rgba(255, 255, 255, .08);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, .3);
+    }
+
+    .badge:nth-child(2) {
+      animation-delay: .6s;
+    }
+
+    .badge:nth-child(3) {
+      animation-delay: 1.2s;
+    }
+
+    .badge:nth-child(4) {
+      animation-delay: 1.8s;
+    }
+
+    .badge:nth-child(5) {
+      animation-delay: 2.4s;
+    }
+
+    .badge:nth-child(6) {
+      animation-delay: 3.0s;
+    }
+
+    .badge:nth-child(7) {
+      animation-delay: 3.6s;
+    }
+
+    .badge:nth-child(8) {
+      animation-delay: 4.2s;
+    }
+
+    .badge i {
+      color: rgba(255, 215, 0, .92);
+    }
+
+    @keyframes floaty {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 28px;
+      padding: 18px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .03);
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      /* Reduced by ~20% */
+    }
+
+    .footer-strong {
+      color: var(--text);
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 980px) {
+      .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .projects {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        grid-template-columns: 90px 1fr;
+      }
+
+      .avatar-wrap,
+      .avatar {
+        width: 90px;
+        height: 90px;
+      }
+
+      .pill {
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .projects {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .pill {
+        width: fit-content;
+      }
+    }
+
+    /* User request: Text color white for headline in Dark Mode */
+    /* User request: font-weight 300 */
+    #headline {
+      color: #ffffff;
+      font-weight: 300 !important;
+    }
+
+    body.light-theme #headline {
+      color: var(--text);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    /* Global Loader */
+    /* Global Loader (Splash Screen) */
+    #global-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(13, 17, 23, 0.5);
+      backdrop-filter: blur(6px);
+      /* Use theme bg for seamless intro */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn 0.6s ease-out;
+      text-align: center;
+    }
+
+    .splash-img {
+      width: 480px;
+      height: auto;
+      border-radius: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      object-fit: cover;
+    }
+
+    .splash-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .splash-tech {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .splash-tech .dot {
+      opacity: 0.3;
+    }
+
+    .splash-footer {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 32px;
+      opacity: 0.7;
+    }
+
+    .splash-footer .divider {
+      margin: 0 6px;
+      opacity: 0.3;
+    }
+
+    .splash-tech a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .splash-tech a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    body.light-theme #global-loader {
+      background: rgba(246, 248, 250, 0.5);
+    }
+
+    #global-loader.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #global-loader.visible {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Global Loader (Splash) -->
+  <div id="global-loader">
+    <div class="splash-container">
+      <img src="splash.jpg" alt="GitHub Stat Splash" class="splash-img">
+      <div class="splash-title">GitHub Stat.</div>
+
+      <div class="splash-tech">
+        <a href="https://www.chartjs.org/" target="_blank" rel="noreferrer">Chart.js</a>
+        <span class="dot">·</span>
+        <a href="https://github.com/nosir/obelisk.js" target="_blank" rel="noreferrer">Obelisk.js</a>
+        <span class="dot">·</span>
+        <a href="https://fontawesome.com/" target="_blank" rel="noreferrer">FontAwesome</a>
+      </div>
+
+      <div class="splash-footer">
+        Jinho Jung <span class="divider">|</span> 2026 (c)
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <span>jvisualschool <i class="fa-brands fa-github" style="margin:0 4px; font-size:14px;"></i> dashboard</span>
+      </div>
+      <nav class="nav-links" aria-label="설정" style="display:flex; gap:6px; align-items:center;">
+        <button id="color-theme-toggle" class="btn-text" aria-label="색상 테마 변경"
+          style="display:flex; align-items:center; justify-content:center;">
+          <span id="theme-preview-dot"
+            style="display:block; width:14px; height:14px; border-radius:50%; background:var(--green);"></span>
+        </button>
+        <button id="lang-toggle" class="btn-text" aria-label="언어 변경">
+          <i class="fa-solid fa-language" style="font-size:16px;"></i>
+        </button>
+        <button id="theme-toggle" class="btn-text" aria-label="테마 변경">
+          <i class="fa-regular fa-moon" style="font-size:16px;"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero reveal" id="top" aria-label="프로필 히어로">
+      <div class="hero-inner">
+        <div class="profile-group">
+          <div class="avatar-wrap">
+            <img class="avatar" id="avatar" alt="Jinho Jung profile image"
+              src="https://avatars.githubusercontent.com/u/63007736?v=4" />
+          </div>
+          <div>
+            <h1 id="display-name" style="margin:0 0 4px 0; font-size:20px;">Jinho Jung</h1>
+            <div class="title" id="headline" style="font-size:14px; margin-bottom:2px;">AI Vibe Coding Specialist</div>
+            <div class="subtitle" id="subtitle" style="font-size:13px; opacity:.7;">교수 · 디자이너 · 일러스트레이터 · 작가</div>
+          </div>
+        </div>
+
+        <div class="hero-meta" style="display:flex; gap:8px;" aria-label="소셜 링크">
+          <a class="btn" href="https://github.com/jvisualschool" target="_blank" rel="noreferrer">
+            <i class="fa-brands fa-github" aria-hidden="true"></i>
+          </a>
+          <a class="btn" href="https://www.jvisualschool.com/" target="_blank" rel="noreferrer">
+            <i class="fa-solid fa-globe" aria-hidden="true"></i>
+          </a>
+          <a class="btn" href="mailto:jvisualschool@gmail.com">
+            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+          </a>
+          <a class="btn" href="https://www.instagram.com/jvisualschool/" target="_blank" rel="noreferrer">
+            <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+          </a>
+          <a class="btn" href="https://www.threads.com/@jvisualschool" target="_blank" rel="noreferrer">
+            <i class="fa-brands fa-threads" aria-hidden="true"></i>
+          </a>
+          <a class="btn" href="https://www.linkedin.com/in/jung-jinho-9068433a6/" target="_blank" rel="noreferrer">
+            <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section id="stats" class="reveal" aria-label="실시간 통계">
+      <div class="section-title">
+        <h2>실시간 통계 카드</h2>
+        <div class="hint">API 토큰 연동 준비됨 · <a href="https://api.github.com" target="_blank"
+            rel="noreferrer">https://api.github.com</a></div>
+      </div>
+
+      <div class="grid-4">
+        <article class="card" aria-label="총 저장소 수">
+          <div class="stat-top">
+            <div class="stat-icon" aria-hidden="true"><i class="fa-solid fa-code-branch"></i></div>
+            <div class="stat-label">Total Repos</div>
+          </div>
+          <div class="stat-value"><span id="total-repos">66</span></div>
+          <div class="stat-sub">public repositories</div>
+        </article>
+
+        <article class="card" aria-label="총 Stars">
+          <div class="stat-top">
+            <div class="stat-icon" aria-hidden="true"><i class="fa-regular fa-star"></i></div>
+            <div class="stat-label">Total Stars</div>
+          </div>
+          <div class="stat-value loading" id="stars-wrap">
+            <div class="skeleton" style="width:60px; height:28px;"></div>
+          </div>
+          <div class="stat-sub" id="stars-sub">total stars across repos</div>
+          <div class="sr-only" id="total-stars" aria-hidden="true">--</div>
+        </article>
+
+        <article class="card" aria-label="올해 commits">
+          <div class="stat-top">
+            <div class="stat-icon" aria-hidden="true"><i class="fa-solid fa-code-commit"></i></div>
+            <div class="stat-label">Commits (YTD)</div>
+          </div>
+          <div class="stat-value loading" id="commits-wrap">
+            <div class="skeleton" style="width:80px; height:28px;"></div>
+          </div>
+          <div class="stat-sub" id="commits-sub">contributions in the last year</div>
+          <div class="sr-only" id="total-commits" aria-hidden="true">--</div>
+        </article>
+
+        <article class="card" aria-label="연속 커밋">
+          <div class="stat-top">
+            <div class="stat-icon" aria-hidden="true"><i class="fa-solid fa-fire"></i></div>
+            <div class="stat-label">Streak Days</div>
+          </div>
+          <div class="stat-value loading" id="streak-wrap">
+            <div class="skeleton" style="width:40px; height:28px;"></div>
+          </div>
+          <div class="stat-sub" id="streak-sub">current active streak</div>
+          <div class="sr-only" id="streak-days" aria-hidden="true">--</div>
+        </article>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section id="insights" class="reveal" aria-label="인사이트">
+      <div class="section-title">
+        <h2>언어 분포 & 활동 히트맵</h2>
+        <div class="hint">언어 차트: Chart.js · <a href="https://www.chartjs.org/" target="_blank"
+            rel="noreferrer">https://www.chartjs.org/</a></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="chart-panel">
+          <div class="stat-top" style="margin-bottom:10px; justify-content: flex-start;">
+            <div>
+              <div style="font-weight:800;">Language Mix</div>
+              <div class="stat-label">언어별 기여도 분석 데이터</div>
+            </div>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="langChart" aria-label="언어 분포 차트" role="img"></canvas>
+          </div>
+          <div id="lang-legend"
+            style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:15px; font-size:11px; color:var(--muted); line-height:1.2;">
+            <!-- Custom Legend -->
+          </div>
+          <div class="user-details-grid" id="user-details-grid"
+            style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+            <!-- Dynamic User Details -->
+          </div>
+        </div>
+
+        <div class="chart-panel">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div>
+              <div style="font-weight:800;">
+                Contribution Heatmap
+                <a href="https://github.com/jasonlong/isometric-contributions" target="_blank" rel="noreferrer"
+                  title="Source: isometric-contributions"
+                  style="color:var(--muted); margin-left:6px; text-decoration:none; font-size:12px;">
+                  <i class="fa-solid fa-code"></i>
+                </a>
+              </div>
+              <div class="stat-label">최근 14주간의 활동 타임라인 (3D View)</div>
+            </div>
+            <a class="btn" href="https://github.com/jvisualschool" target="_blank" rel="noreferrer"
+              style="padding:8px 10px; font-size:12px;">
+              <i class="fa-brands fa-github" aria-hidden="true"></i><span>Open profile</span>
+            </a>
+          </div>
+
+          <div class="iso-stage" id="iso-stage">
+            <canvas id="iso-canvas"></canvas>
+            <div class="tooltip" id="tooltip"></div>
+
+            <!-- Top right stats -->
+            <div class="iso-overlay-group iso-overlay-top-right">
+              <div class="group-title">기여도</div>
+              <div class="iso-stat-box">
+                <div class="iso-stat-item">
+                  <div class="val" id="overlay-stat-total">-</div>
+                  <div class="lbl">총 합계</div>
+                  <div class="date" id="overlay-stat-range">-</div>
+                </div>
+                <div class="iso-stat-item">
+                  <div class="val" id="overlay-stat-busy">-</div>
+                  <div class="lbl">최고 기록</div>
+                  <div class="date" id="overlay-stat-busy-date">-</div>
+                </div>
+              </div>
+              <div class="iso-avg-text">
+                <span>평균:</span> <strong id="overlay-stat-avg">-</strong> <span>/ 일</span>
+              </div>
+            </div>
+
+            <!-- Bottom left stats -->
+            <div class="iso-overlay-group iso-overlay-bottom-left">
+              <div class="group-title">연속 기록</div>
+              <div class="iso-stat-box">
+                <div class="iso-stat-item">
+                  <div class="val">
+                    <span id="overlay-stat-long">-</span>
+                    <span class="unit">일</span>
+                  </div>
+                  <div class="lbl">최장 연속</div>
+                  <div class="date" id="overlay-stat-long-range">-</div>
+                </div>
+                <div class="iso-stat-item">
+                  <div class="val">
+                    <span id="overlay-stat-cur">-</span>
+                    <span class="unit">일</span>
+                  </div>
+                  <div class="lbl">현재 연속</div>
+                  <div class="date" id="overlay-stat-cur-range">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section id="projects" class="reveal" aria-label="Featured Projects">
+      <div class="section-title">
+        <h2>Featured Projects</h2>
+        <div class="hint">레포 링크: <a href="https://github.com/jvisualschool?tab=repositories" target="_blank"
+            rel="noreferrer">https://github.com/jvisualschool?tab=repositories</a></div>
+      </div>
+
+      <div class="projects" id="projectGrid">
+        <a class="p-card" href="https://github.com/jvisualschool/ai-vibe-coding" target="_blank" rel="noreferrer"
+          data-tilt>
+          <div class="p-title">ai-vibe-coding</div>
+          <div class="p-desc">AI 코딩 워크플로우를 위한 프롬프트 엔지니어링 및 자동화 스크립트 모음.</div>
+          <div class="tags">
+            <span class="tag">AI</span>
+            <span class="tag">Prompt</span>
+            <span class="tag">Automation</span>
+          </div>
+          <div class="p-meta">
+            <div class="kpi"><span><i class="fa-solid fa-star"></i> 12</span><span><i class="fa-solid fa-code-fork"></i>
+                3</span>
+            </div>
+            <span>updated</span>
+          </div>
+        </a>
+
+        <a class="p-card" href="https://github.com/jvisualschool/design-system-tokens" target="_blank" rel="noreferrer"
+          data-tilt>
+          <div class="p-title">design-system-tokens</div>
+          <div class="p-desc">Figma와 연동되는 디자인 시스템 토큰(JSON). 테마별 변수 자동 생성기 포함.</div>
+          <div class="tags">
+            <span class="tag">JSON</span>
+            <span class="tag">DesignSystem</span>
+            <span class="tag">Figma</span>
+          </div>
+          <div class="p-meta">
+            <div class="kpi"><span><i class="fa-solid fa-star"></i> 6</span><span><i class="fa-solid fa-code-fork"></i>
+                —</span></div>
+            <span>open</span>
+          </div>
+        </a>
+
+        <a class="p-card" href="https://github.com/jvisualschool/gemini-image-generator" target="_blank"
+          rel="noreferrer" data-tilt>
+          <div class="p-title">gemini-image-generator</div>
+          <div class="p-desc">Flask 기반 이미지 생성/관리 UI 목업. CSV 메타데이터 + 파일 관리 루틴 포함.</div>
+          <div class="tags">
+            <span class="tag">Python</span>
+            <span class="tag">Flask</span>
+            <span class="tag">Gemini</span>
+          </div>
+          <div class="p-meta">
+            <div class="kpi"><span><i class="fa-solid fa-star"></i> 4</span><span><i class="fa-solid fa-code-fork"></i>
+                5</span></div>
+            <span>open</span>
+          </div>
+        </a>
+
+        <a class="p-card" href="https://github.com/jvisualschool/vibe-term" target="_blank" rel="noreferrer" data-tilt>
+          <div class="p-title">vibe-term</div>
+          <div class="p-desc">AI 용어 사전. UI 관점에서 ‘학습 가능한 사전’ 구조로 확장 가능한 베이스.</div>
+          <div class="tags">
+            <span class="tag">CSS</span>
+            <span class="tag">Dictionary</span>
+            <span class="tag">Vibe</span>
+          </div>
+          <div class="p-meta">
+            <div class="kpi"><span><i class="fa-solid fa-star"></i> 18</span><span><i class="fa-solid fa-code-fork"></i>
+                2</span></div>
+            <span>stable</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- STACK -->
+    <section id="stack" class="reveal" aria-label="기술 스택">
+      <div class="section-title">
+        <h2>Tech Stack</h2>
+        <div class="hint">아이콘: Font Awesome · <a href="https://fontawesome.com" target="_blank"
+            rel="noreferrer">https://fontawesome.com</a></div>
+      </div>
+
+      <div class="stack">
+        <div class="badge-cloud" aria-label="기술 배지">
+          <a href="https://www.python.org/" target="_blank" class="badge"><i class="fa-brands fa-python"
+              aria-hidden="true"></i>Python</a>
+          <a href="https://www.typescriptlang.org/" target="_blank" class="badge"><i class="fa-brands fa-js"
+              aria-hidden="true"></i>TypeScript</a>
+          <a href="https://react.dev/" target="_blank" class="badge"><i class="fa-brands fa-react"
+              aria-hidden="true"></i>React</a>
+          <a href="https://flask.palletsprojects.com/" target="_blank" class="badge"><i class="fa-solid fa-flask"
+              aria-hidden="true"></i>Flask</a>
+          <a href="https://deepmind.google/technologies/gemini/" target="_blank" class="badge"><i
+              class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>Gemini</a>
+          <a href="https://aws.amazon.com/" target="_blank" class="badge"><i class="fa-brands fa-aws"
+              aria-hidden="true"></i>AWS</a>
+          <a href="https://www.mysql.com/" target="_blank" class="badge"><i class="fa-solid fa-database"
+              aria-hidden="true"></i>MySQL</a>
+          <a href="https://tailwindcss.com/" target="_blank" class="badge"><i class="fa-solid fa-wind"
+              aria-hidden="true"></i>Tailwind</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer id="footer" class="reveal" aria-label="푸터" style="justify-content: center;">
+      <div
+        style="display:flex; align-items:center; gap:8px; font-size: 12px; flex-wrap: wrap; justify-content: center;">
+        <span style="font-weight:700; color:var(--text);">GitHub Stat.</span>
+        <span style="opacity:0.2">|</span>
+
+        <!-- Tech Stack Links -->
+        <div style="display:flex; gap:6px; align-items:center; color:var(--muted);">
+          <a href="https://www.chartjs.org/" target="_blank" rel="noreferrer"
+            style="transition:color .2s; text-decoration:none;">Chart.js</a>
+          <span style="opacity:0.3">·</span>
+          <a href="https://github.com/nosir/obelisk.js" target="_blank" rel="noreferrer"
+            style="transition:color .2s; text-decoration:none;">Obelisk.js</a>
+          <span style="opacity:0.3">·</span>
+          <a href="https://fontawesome.com/" target="_blank" rel="noreferrer"
+            style="transition:color .2s; text-decoration:none;">FontAwesome</a>
+        </div>
+
+        <span style="opacity:0.2">|</span>
+        <a href="mailto:jvisualschool@gmail.com" style="color:var(--text); font-weight:600; text-decoration:none;">Jinho
+          Jung</a>
+        <span style="opacity:0.2">|</span>
+        <span>2026 (c)</span>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /*
+      ===============================
+      API 통합 준비 코드 (토큰 필요)
+      ===============================
+
+      - 정작가님이 실제 데이터는 토큰으로 업데이트한다고 하셨으므로,
+        아래 함수는 그대로 두고, UI 업데이트 부분(updateDashboardFromGitHub)을 완성해두었습니다.
+
+      - 참고: GitHub API rate limit / token scope
+        https://docs.github.com/en/rest
+    */
+
+    // GitHub GraphQL Proxy를 통한 데이터 호출
+    async function fetchGitHubDashboardData(username) {
+      const query = `
+        query($login: String!) {
+          user(login: $login) {
+            name
+            avatarUrl
+            createdAt
+            followers {
+              totalCount
+            }
+            pullRequests(first: 1) {
+              totalCount
+            }
+            issues(first: 1) {
+              totalCount
+            }
+            repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}) {
+              totalCount
+              totalDiskUsage
+              nodes {
+                name
+                description
+                url
+                updatedAt
+                stargazerCount
+                forkCount
+                primaryLanguage {
+                  name
+                }
+                repositoryTopics(first: 3) {
+                  nodes {
+                    topic {
+                      name
+                    }
+                  }
+                }
+                languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+                  edges {
+                    size
+                    node {
+                      name
+                      color
+                    }
+                  }
+                }
+              }
+            }
+            contributionsCollection {
+              contributionCalendar {
+                totalContributions
+                weeks {
+                  contributionDays {
+                    contributionCount
+                    date
+                    color
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      try {
+        const response = await fetch('api/github-graphql.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: json_encode({ query, variables: { login: username } })
+        });
+        const json = await response.json();
+        return json.data.user;
+      } catch (e) {
+        console.error('Fetch error:', e);
+        return null;
+      }
+    }
+
+    // JSON helper for consistency
+    function json_encode(obj) { return JSON.stringify(obj); }
+
+    /*
+      ===============================
+      UI/인터랙션 유틸
+      ===============================
+    */
+
+    function formatNumber(n) {
+      if (n === null || n === undefined || Number.isNaN(n)) return '--';
+      return new Intl.NumberFormat('en-US').format(n);
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+    }
+
+    function countUp(el, to, duration = 900) {
+      const start = performance.now();
+      const from = 0;
+      const toNum = Number(to);
+      if (!Number.isFinite(toNum)) {
+        el.textContent = to;
+        return;
+      }
+
+      function tick(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const cur = Math.round(from + (toNum - from) * eased);
+        el.textContent = formatNumber(cur);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function replaceSkeleton(wrapperId, valueId, value, subText, subId) {
+      const wrap = document.getElementById(wrapperId);
+      const sub = document.getElementById(subId);
+      const sr = document.getElementById(valueId);
+
+      if (sr) sr.textContent = value;
+
+      if (wrap) {
+        wrap.classList.remove('loading');
+        wrap.innerHTML = `<span>${formatNumber(value)}</span>`;
+        const span = wrap.querySelector('span');
+        if (span) countUp(span, value);
+      }
+      if (sub) {
+        sub.classList.remove('loading');
+        sub.textContent = subText;
+      }
+    }
+
+    /*
+      ===============================
+      Chart.js: Language distribution
+      ===============================
+    */
+
+    let langChart;
+
+    function buildLangChart(dataObj) {
+      const ctx = document.getElementById('langChart');
+      const labels = Object.keys(dataObj).slice(0, 6);
+      const values = Object.values(dataObj).slice(0, 6);
+
+      // Use dynamic colors based on the current theme
+      const colors = [
+        getComputedStyle(document.documentElement).getPropertyValue('--green-3') || 'rgba(255,215,0,.82)',
+        getComputedStyle(document.documentElement).getPropertyValue('--green-2') || 'rgba(77,163,255,.78)',
+        getComputedStyle(document.documentElement).getPropertyValue('--green-1') || 'rgba(57,217,138,.72)',
+        getComputedStyle(document.documentElement).getPropertyValue('--green-0') || 'rgba(255,107,107,.72)',
+        'rgba(230,237,243,.50)',
+        'rgba(180,180,180,.40)'
+      ];
+
+      if (langChart) langChart.destroy();
+
+      langChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, labels.length),
+            borderColor: 'transparent', // Set dataset border to transparent
+            borderWidth: 0, // Set dataset border width to 0
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          elements: {
+            arc: {
+              borderWidth: 0, // Remove stroke outline
+              borderColor: 'transparent' // Ensure transparent border
+            }
+          },
+          plugins: {
+            legend: {
+              display: false // Hide default legend
+            },
+            tooltip: {
+              backgroundColor: 'rgba(22, 27, 34, 0.95)',
+              titleColor: '#c9d1d9',
+              bodyColor: '#c9d1d9',
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: (ctx) => {
+                  const label = ctx.label || '';
+                  const val = ctx.raw || 0;
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const per = ((val / total) * 100).toFixed(1);
+                  return ` ${label}: ${val} (${per}%)`;
+                }
+              }
+            }
+          },
+          cutout: '62%'
+        }
+      });
+
+      // Generate Custom Legend
+      const legendContainer = document.getElementById('lang-legend');
+      if (legendContainer) {
+        legendContainer.innerHTML = labels.map((lb, i) => {
+          const color = colors[i] || '#ccc';
+          return `
+             <div style="display:flex; align-items:center; gap:4px; white-space:nowrap;">
+               <span style="width:8px; height:8px; border-radius:50%; background-color:${color}; display:inline-block;"></span>
+               <span>${lb}</span>
+             </div>
+           `;
+        }).join('');
+      }
+    }
+
+    /*
+      ===============================
+      Isometric 3D Heatmap Rendering
+      ===============================
+    */
+
+    const themes = {
+      standard: {
+        name: 'GitHub',
+        colors: ['#EBEDF0', '#9BE9A8', '#40C463', '#30A14E', '#216E39']
+      }
+    };
+
+    function colorForCount(count) {
+      // Use CSS variables for dynamic theme colors
+      const rootStyle = getComputedStyle(document.documentElement);
+      const colors = [
+        rootStyle.getPropertyValue('--green-0') || '#EBEDF0',
+        rootStyle.getPropertyValue('--green-1') || '#9BE9A8',
+        rootStyle.getPropertyValue('--green-2') || '#40C463',
+        rootStyle.getPropertyValue('--green-3') || '#30A14E',
+        rootStyle.getPropertyValue('--green-4') || '#216E39'
+      ];
+
+      if (count <= 0) return colors[0];
+      if (count <= 3) return colors[1];
+      if (count <= 6) return colors[2];
+      if (count <= 9) return colors[3];
+      return colors[4];
+    }
+
+    function precisionRound(number, precision) {
+      const factor = 10 ** precision;
+      return Math.round(number * factor) / factor;
+    }
+
+    function formatDateHuman(iso) {
+      if (!iso) return '';
+      const d = new Date(iso + 'T00:00:00');
+      return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    }
+
+    function renderIsometricObelisk(days) {
+      const canvas = document.getElementById('iso-canvas');
+      const stage = document.getElementById('iso-stage');
+      const tooltip = document.getElementById('tooltip');
+
+      // Setup weeks data
+      const first = new Date(days[0].date + 'T00:00:00');
+      const pad = first.getDay();
+      const padded = Array.from({ length: pad }, () => ({ date: null, count: 0, pad: true })).concat(days);
+      const totalSlots = Math.ceil(padded.length / 7) * 7;
+      while (padded.length < totalSlots) padded.push({ date: null, count: 0, pad: true });
+      const weeks = totalSlots / 7;
+
+      let maxCount = 0;
+      for (const d of days) maxCount = Math.max(maxCount, d.count);
+
+      // Sizing logic: adjust for display period density
+      let SIZE = 18;
+      if (weeks > 30) SIZE = 14;
+      if (weeks > 45) SIZE = 11;
+
+      const MAX_HEIGHT = Math.min(100, stage.clientHeight * 0.28);
+
+      canvas.width = stage.clientWidth;
+      canvas.height = stage.clientHeight;
+
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      // Centering logic: calculate startX/startY so grid center matches canvas center
+      const startX = (canvasWidth / 2) - ((weeks * SIZE - 7 * SIZE) / 2);
+      const startY = (canvasHeight / 2) - ((weeks * SIZE + 7 * SIZE) / 4) + (MAX_HEIGHT / 3);
+
+      const point = new obelisk.Point(startX, startY);
+      const pixelView = new obelisk.PixelView(canvas, point);
+
+      const heights = new Array(totalSlots).fill(0);
+      const hexToInt = (hex) => Number.parseInt(hex.replace('#', ''), 16);
+
+      for (let w = 0; w < weeks; w++) {
+        for (let d = 0; d < 7; d++) {
+          const idx = w * 7 + d;
+          const item = padded[idx];
+          if (!item || item.pad) continue;
+
+          const count = item.count;
+          let cubeHeight = 4;
+          if (maxCount > 0) cubeHeight += Math.floor((MAX_HEIGHT / maxCount) * count);
+          heights[idx] = cubeHeight;
+
+          const dimension = new obelisk.CubeDimension(SIZE, SIZE, cubeHeight);
+          const colorInt = hexToInt(colorForCount(count));
+          const color = new obelisk.CubeColor().getByHorizontalColor(colorInt);
+          const cube = new obelisk.Cube(dimension, color, false);
+          const p3d = new obelisk.Point3D(SIZE * w, SIZE * d, 0);
+          pixelView.renderObject(cube, p3d);
+        }
+      }
+
+      // Hover hit-test
+      canvas.onmouseleave = () => {
+        tooltip.style.opacity = '0';
+      };
+
+      canvas.onmousemove = (ev) => {
+        const cRect = canvas.getBoundingClientRect();
+        const mx = (ev.clientX - cRect.left) * (canvasWidth / cRect.width);
+        const my = (ev.clientY - cRect.top) * (canvasHeight / cRect.height);
+
+        let activeItem = null;
+        let anchorX = 0;
+        let anchorY = 0;
+
+        for (let w = weeks - 1; w >= 0; w--) {
+          for (let d = 6; d >= 0; d--) {
+            const idx = w * 7 + d;
+            const item = padded[idx];
+            if (!item || item.pad || !item.date || item.count === 0) continue;
+
+            const h = heights[idx];
+            const bx = startX + (w * SIZE - d * SIZE);
+            const by = startY + (w * SIZE + d * SIZE) / 2;
+
+            const dx = Math.abs(mx - bx);
+            if (dx > SIZE) continue;
+
+            const dyTop = by - h - SIZE / 2;
+            const dyBottom = by + SIZE / 2;
+
+            if (my >= dyTop && my <= dyBottom) {
+              if ((dx <= SIZE && my >= (by - h) && my <= by) || (Math.abs(mx - bx) + 2 * Math.abs(my - (by - h)) <= SIZE)) {
+                activeItem = item;
+                anchorX = bx;
+                anchorY = by - h;
+                break;
+              }
+            }
+          }
+          if (activeItem) break;
+        }
+
+        if (activeItem) {
+          const screenX = (anchorX / canvasWidth) * cRect.width;
+          const screenXOffset = (mx / canvasWidth) * cRect.width;
+          const screenY = (anchorY / canvasHeight) * cRect.height;
+          tooltip.style.opacity = '1';
+          tooltip.style.left = `${screenXOffset}px`;
+          tooltip.style.top = `${screenY}px`;
+          tooltip.innerHTML = `<strong>${activeItem.count}회 기여</strong> <span style="color:#bbb; font-size:11px;">(${formatDateHuman(activeItem.date)})</span>`;
+        } else {
+          tooltip.style.opacity = '0';
+        }
+      };
+    }
+
+    /*
+      ===============================
+      3D Tilt effect
+      ===============================
+    */
+
+    function attachTilt(el) {
+      const maxTilt = 10;
+      const maxScale = 1.02;
+
+      function onMove(e) {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        const rotY = (x - 0.5) * (maxTilt * 2);
+        const rotX = -(y - 0.5) * (maxTilt * 2);
+        el.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${maxScale})`;
+      }
+
+      function onLeave() {
+        el.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+      }
+
+      el.addEventListener('mousemove', onMove);
+      el.addEventListener('mouseleave', onLeave);
+    }
+
+    /*
+      ===============================
+      Scroll reveal
+      ===============================
+    */
+
+    function setupReveal() {
+      const els = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(en => {
+          if (en.isIntersecting) en.target.classList.add('visible');
+        });
+      }, { threshold: 0.12 });
+      els.forEach(el => io.observe(el));
+    }
+
+    /*
+      ===============================
+      Dashboard updater
+      ===============================
+    */
+
+    function updateDashboard(userData) {
+      if (!userData) return;
+
+      // hero
+      if (userData.avatarUrl) document.getElementById('avatar').src = userData.avatarUrl;
+      if (userData.name) document.getElementById('display-name').textContent = userData.name;
+
+      // repos & stars
+      const repos = userData.repositories.nodes;
+      const totalStars = repos.reduce((acc, r) => acc + r.stargazerCount, 0);
+      const totalForks = repos.reduce((acc, r) => acc + (r.forkCount || 0), 0);
+      setText('total-repos', formatNumber(userData.repositories.totalCount));
+      replaceSkeleton('stars-wrap', 'total-stars', totalStars, 'total stars across repos', 'stars-sub');
+
+      // User Details Rendering
+      const joinedYear = new Date(userData.createdAt).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const yearsAgo = currentYear - joinedYear; // Simple calc, can be more precise
+      const followers = userData.followers.totalCount;
+      const contributedRepos = userData.repositories.totalCount; // Using own repos as proxy for contributed
+      // Activity = Commits + PRs + Issues
+      const totalActivity = userData.contributionsCollection.contributionCalendar.totalContributions +
+        (userData.pullRequests?.totalCount || 0) +
+        (userData.issues?.totalCount || 0);
+
+      const diskUsage = userData.repositories.totalDiskUsage ? (userData.repositories.totalDiskUsage / 1024).toFixed(1) : '0'; // in MB (API gives KB)
+
+      const detailsHtml = `
+        <div class="user-details-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px; color: var(--text);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-regular fa-clock" style="width: 16px;"></i>
+            <span>Joined GitHub <strong class="val">${yearsAgo}</strong> years ago</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+             <i class="fa-solid fa-user-group" style="width: 16px;"></i>
+            <span>Followed by <strong class="val">${followers}</strong> users</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+             <i class="fa-solid fa-code-branch" style="width: 16px;"></i>
+            <span>Contributed to <strong class="val">${contributedRepos}</strong> repositories</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+             <i class="fa-solid fa-chart-line" style="width: 16px;"></i>
+            <span>Activity <strong class="val">${formatNumber(totalActivity)}</strong> Commits</span>
+          </div>
+           <div style="display: flex; align-items: center; gap: 8px;">
+             <i class="fa-solid fa-database" style="width: 16px;"></i>
+            <span><strong class="val">${diskUsage}</strong> MB used</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+             <i class="fa-regular fa-star" style="width: 16px;"></i>
+            <span><strong class="val">${totalStars}</strong> Stargazers</span>
+          </div>
+           <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-code-fork" style="width: 16px;"></i>
+            <span><strong class="val">${totalForks}</strong> Forkers</span>
+          </div>
+        </div>
+      `;
+      document.getElementById('user-details-grid').innerHTML = detailsHtml;
+
+      // commits & 3D graph
+      const calendar = userData.contributionsCollection.contributionCalendar;
+      replaceSkeleton('commits-wrap', 'total-commits', calendar.totalContributions, 'contributions in the last year', 'commits-sub');
+
+      // Process days for 3D graph
+      const allDays = [];
+      calendar.weeks.forEach(w => w.contributionDays.forEach(d => allDays.push({ date: d.date, count: d.contributionCount })));
+
+      // Find the first active day to show only the active period
+      const firstActiveIdx = allDays.findIndex(d => d.count > 0);
+      const displayDays = firstActiveIdx === -1 ? allDays.slice(-98) : allDays.slice(firstActiveIdx);
+
+      // Render 3D Graph
+      renderIsometricObelisk(displayDays);
+
+      // Update overlay stats
+      const fmt = new Intl.NumberFormat('en-US');
+      const stats = {
+        total: calendar.totalContributions,
+        rangeStart: allDays[0].date,
+        rangeEnd: allDays[allDays.length - 1].date,
+        busiest: allDays.reduce((a, b) => a.count > b.count ? a : b)
+      };
+
+      const formatShort = (iso) => {
+        if (!iso) return '';
+        const d = new Date(iso + 'T00:00:00');
+        const months = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+        return `${months[d.getMonth()]}월 ${d.getDate()}일`;
+      };
+
+      document.getElementById('overlay-stat-total').textContent = fmt.format(stats.total);
+      document.getElementById('overlay-stat-range').textContent = `${formatShort(stats.rangeStart)} → ${formatShort(stats.rangeEnd)}`;
+
+      document.getElementById('overlay-stat-busy').textContent = String(stats.busiest.count);
+      document.getElementById('overlay-stat-busy-date').textContent = formatShort(stats.busiest.date);
+
+      const avg = precisionRound(stats.total / allDays.length, 2);
+      document.getElementById('overlay-stat-avg').textContent = avg;
+
+      // streak (calc from calendar)
+      let streak = 0;
+      let longestStreak = 0;
+      let curLongestStart = null;
+      let curLongestEnd = null;
+      let tempStart = null;
+
+      for (let i = 0; i < allDays.length; i++) {
+        if (allDays[i].count > 0) {
+          if (streak === 0) tempStart = allDays[i].date;
+          streak++;
+          if (streak > longestStreak) {
+            longestStreak = streak;
+            curLongestStart = tempStart;
+            curLongestEnd = allDays[i].date;
+          }
+        } else {
+          streak = 0;
+        }
+      }
+
+      // Current streak (from end)
+      let currentStreak = 0;
+      let currentStreakStart = null;
+      for (let i = allDays.length - 1; i >= 0; i--) {
+        if (allDays[i].count > 0) {
+          currentStreak++;
+          currentStreakStart = allDays[i].date;
+        } else if (currentStreak > 0) {
+          break;
+        }
+      }
+
+      document.getElementById('overlay-stat-long').textContent = String(longestStreak);
+      document.getElementById('overlay-stat-long-range').textContent = `${formatShort(curLongestStart)} → ${formatShort(curLongestEnd)}`;
+
+      document.getElementById('overlay-stat-cur').textContent = String(currentStreak);
+      document.getElementById('overlay-stat-cur-range').textContent = `${formatShort(currentStreakStart)} → ${formatShort(allDays[allDays.length - 1].date)}`;
+
+      replaceSkeleton('streak-wrap', 'streak-days', currentStreak, 'current active streak', 'streak-sub');
+
+      // languages
+      const langMap = {};
+      repos.forEach(r => {
+        r.languages.edges.forEach(e => {
+          langMap[e.node.name] = (langMap[e.node.name] || 0) + e.size;
+        });
+      });
+      buildLangChart(langMap);
+
+      // Featured Projects (Top 4 by Stars) - Added by User Request
+      const topProjects = repos.slice(0, 4); // Already sorted by STARGAZERS DESC from API
+      const projectGrid = document.getElementById('projectGrid');
+
+      if (projectGrid && topProjects.length > 0) {
+        projectGrid.innerHTML = topProjects.map(repo => {
+          const topics = repo.repositoryTopics?.nodes?.map(n => n.topic.name) || [];
+          const desc = repo.description || 'No description provided';
+          const lang = repo.primaryLanguage?.name || 'Code';
+          // Use topics if available, else primary language
+          const tagsHtml = topics.length > 0
+            ? topics.map(t => `<span class="tag">${t}</span>`).join('')
+            : `<span class="tag">${lang}</span>`;
+
+          return `
+        <a class="p-card" href="${repo.url}" target="_blank" rel="noreferrer" data-tilt>
+          <div class="p-title">${repo.name}</div>
+          <div class="p-desc">${desc}</div>
+          <div class="tags">
+            ${tagsHtml}
+          </div>
+          <div class="p-meta">
+            <div class="kpi">
+              <span><i class="fa-solid fa-star"></i> ${repo.stargazerCount}</span>
+              <span><i class="fa-solid fa-code-fork"></i> ${repo.forkCount}</span>
+            </div>
+            <span>${formatDateHuman(repo.updatedAt)}</span>
+          </div>
+        </a>`;
+        }).join('');
+
+        // Re-attach tilt effect to new elements
+        if (typeof attachTilt === 'function') {
+          document.querySelectorAll('#projectGrid [data-tilt]').forEach(attachTilt);
+        }
+      }
+
+      // last updated
+      setText('last-updated', new Date().toLocaleString('ko-KR'));
+    }
+
+    /*
+      ===============================
+      Boot
+      ===============================
+    */
+
+    (function init() {
+      setupReveal();
+      document.querySelectorAll('[data-tilt]').forEach(attachTilt);
+
+      setText('last-updated', '불러오는 중...');
+
+      // Language Dictionary
+      const langData = {
+        ko: {
+          headline: 'AI Vibe Coding Specialist',
+          subtitle: '교수 · 디자이너 · 일러스트레이터',
+          statsTitle: '실시간 통계 카드',
+          hint: 'API 토큰 연동 준비됨',
+          totalRepos: 'Total Repos',
+          totalReposSub: 'public repositories',
+          totalStars: 'Total Stars',
+          totalStarsSub: 'total stars across repos',
+          commits: 'Commits (YTD)',
+          commitsSub: 'contributions in the last year',
+          streak: 'Streak Days',
+          streakSub: 'current active streak',
+          langTitle: 'Language Mix',
+          langDesc: '언어별 기여도 분석 데이터',
+          heatTitle: 'Contribution Heatmap',
+          heatDesc: '최근 14주간의 활동 타임라인 (3D View)',
+          openProfile: 'Open profile',
+          footerText: 'Last updated:',
+
+          // Dynamic details
+          joined: 'Joined GitHub',
+          ago: 'years ago',
+          followed: 'Followed by',
+          users: 'users',
+          contributed: 'Contributed to',
+          repos: 'repositories',
+          activity: 'Activity',
+          commitsLabel: 'Commits',
+          used: 'used',
+          stars: 'Stargazers',
+          forkers: 'Forkers'
+        },
+        en: {
+          headline: 'AI Vibe Coding Specialist',
+          subtitle: 'Professor · Designer · Illustrator',
+          statsTitle: 'Real-time Stats Cards',
+          hint: 'API Token Ready',
+          totalRepos: 'Total Repos',
+          totalReposSub: 'public repositories',
+          totalStars: 'Total Stars',
+          totalStarsSub: 'total stars across repos',
+          commits: 'Commits (YTD)',
+          commitsSub: 'contributions in the last year',
+          streak: 'Streak Days',
+          streakSub: 'current active streak',
+          langTitle: 'Language Mix',
+          langDesc: 'Language Contribution Breakdown',
+          heatTitle: 'Contribution Heatmap',
+          heatDesc: 'Activity Timeline (Last 14 Weeks)',
+          openProfile: 'Open profile',
+          footerText: 'Last updated:',
+
+          // Dynamic details
+          joined: 'Joined GitHub',
+          ago: 'years ago',
+          followed: 'Followed by',
+          users: 'users',
+          contributed: 'Contributed to',
+          repos: 'repositories',
+          activity: 'Activity',
+          commitsLabel: 'Commits',
+          used: 'used',
+          stars: 'Stargazers',
+          forkers: 'Forkers'
+        }
+      };
+
+      // Theme & Lang Toggles
+      const langToggle = document.getElementById('lang-toggle');
+      const themeToggle = document.getElementById('theme-toggle');
+
+      let currentLang = 'ko'; // 'ko' or 'en'
+
+      function updateLanguage() {
+        const t = langData[currentLang];
+
+        // Static text updates
+        setText('headline', t.headline);
+        setText('subtitle', t.subtitle);
+        document.querySelector('.section-title h2').textContent = t.statsTitle;
+        // document.querySelector('.section-title .hint').firstChild.textContent = t.hint + ' · '; 
+
+        // Stats cards labels (if elements have IDs, add IDs to HTML first if needed, otherwise use querySelector)
+        // Since original HTML structure is complex, we might need to add IDs or use specific selectors.
+        // For now, targeting purely by text content is risky. Let's assume updating key dynamic parts.
+
+        document.querySelectorAll('.stat-label')[0].textContent = t.totalRepos;
+        document.querySelectorAll('.stat-sub')[0].textContent = t.totalReposSub;
+
+        document.querySelectorAll('.stat-label')[1].textContent = t.totalStars;
+        document.getElementById('stars-sub').textContent = t.totalStarsSub;
+
+        document.querySelectorAll('.stat-label')[2].textContent = t.commits;
+        // commits-sub handled by update logic but label needs update
+
+        document.querySelectorAll('.stat-label')[3].textContent = t.streak;
+        document.getElementById('streak-sub').textContent = t.streakSub;
+
+        // Charts titles
+        const panels = document.querySelectorAll('.chart-panel');
+        if (panels[0]) {
+          panels[0].querySelector('.stat-label').textContent = t.langDesc;
+          panels[0].querySelector('div[style*="font-weight:800"]').textContent = t.langTitle;
+        }
+        if (panels[1]) {
+          panels[1].querySelector('.stat-label').textContent = t.heatDesc;
+          panels[1].querySelector('div[style*="font-weight:800"]').textContent = t.heatTitle;
+          panels[1].querySelector('.btn span').textContent = t.openProfile;
+        }
+
+        // Re-render user details if data exists
+        // (This requires storing userData globally or re-fetching/re-calling updateDashboard. 
+        //  Simpler approach: Just reload page or keep it simple for now)
+      }
+
+      // Theme definitions from index.html
+      const themes = {
+        green: {
+          colors: ['#EBEDF0', '#9BE9A8', '#40C463', '#30A14E', '#216E39'],
+          name: 'Green'
+        },
+        blue: {
+          colors: ['#EBEDF0', '#B3D9FF', '#4DA6FF', '#0066CC', '#004499'],
+          name: 'Blue'
+        },
+        purple: {
+          colors: ['#EBEDF0', '#D4B3FF', '#B366FF', '#9933CC', '#660099'],
+          name: 'Purple'
+        },
+        orange: {
+          colors: ['#EBEDF0', '#FFD4A3', '#FF9933', '#FF6600', '#CC3300'],
+          name: 'Orange'
+        },
+        red: {
+          colors: ['#EBEDF0', '#FFB3B3', '#FF6666', '#CC0000', '#990000'],
+          name: 'Red'
+        }
+      };
+      const themeOrder = ['green', 'blue', 'purple', 'orange', 'red'];
+      let currentThemeIndex = 0;
+
+      function applyColorTheme(themeKey) {
+        const theme = themes[themeKey];
+        const root = document.documentElement;
+
+        // Update CSS variables
+        // --green is the main accent. We use index 2 or 3 for primary. 
+        // Index 2 (#40C463 in green) is standard 'green'.
+        root.style.setProperty('--green', theme.colors[2]);
+
+        // Also update the palette variables if used by Obelisk
+        // Note: Obelisk in this file renders strictly based on passed logic, 
+        // but let's update global vars for consistency if used elsewhere.
+        root.style.setProperty('--green-0', theme.colors[0]);
+        root.style.setProperty('--green-1', theme.colors[1]);
+        root.style.setProperty('--green-2', theme.colors[2]);
+        root.style.setProperty('--green-3', theme.colors[3]);
+        root.style.setProperty('--green-4', theme.colors[4]);
+
+        // Update preview dot
+        const dot = document.getElementById('theme-preview-dot');
+        if (dot) dot.style.background = theme.colors[2];
+
+        // Re-render charts to reflect color change
+        // We need to re-fetch or re-use cached data. 
+        // Currently data is not cached globally in variable accessible here easily effectively without re-fetch structure.
+        // But we can trigger a re-render if we save the last data.
+        if (window.lastFetchedData) {
+          updateDashboard(window.lastFetchedData);
+        }
+      }
+
+      // Color Theme Toggle
+      const colorToggle = document.getElementById('color-theme-toggle');
+      if (colorToggle) {
+        colorToggle.addEventListener('click', () => {
+          currentThemeIndex = (currentThemeIndex + 1) % themeOrder.length;
+          applyColorTheme(themeOrder[currentThemeIndex]);
+        });
+      }
+
+      // Initialize Theme
+      applyColorTheme('green');
+
+      // Make data globally accessible for re-render
+      window.lastFetchedData = null;
+
+      fetchGitHubDashboardData('jvisualschool').then(data => {
+        if (data) {
+          window.lastFetchedData = data;
+          updateDashboard(data);
+        }
+      });
+
+      // Fixed Loader Duration: Show for exactly 2 seconds
+      setTimeout(() => {
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.add('fade-out');
+      }, 2000);
+
+      // Language Toggle
+      langToggle.addEventListener('click', () => {
+        currentLang = currentLang === 'ko' ? 'en' : 'ko';
+
+        updateLanguage();
+        // Trigger data update again to refresh dynamic text with new lang
+        if (window.lastFetchedData) updateDashboard(window.lastFetchedData);
+      });
+
+      let isLight = false;
+      themeToggle.addEventListener('click', () => {
+        isLight = !isLight;
+        document.body.classList.toggle('light-theme');
+        themeToggle.innerHTML = isLight ? '<i class="fa-regular fa-sun" style="font-size:16px;"></i>' : '<i class="fa-regular fa-moon" style="font-size:16px;"></i>';
+      });
+
+      // Brand Click (Cat Icon) -> Show Splash again
+      const brandEl = document.querySelector('.brand');
+      if (brandEl) {
+        brandEl.style.cursor = 'pointer';
+        brandEl.addEventListener('click', () => {
+          const loader = document.getElementById('global-loader');
+          if (loader) {
+            loader.classList.remove('fade-out');
+            loader.classList.add('visible'); // Ensure visibility
+
+            // Re-trigger animation
+            const container = loader.querySelector('.splash-container');
+            if (container) {
+              container.style.animation = 'none';
+              container.offsetHeight; /* trigger reflow */
+              container.style.animation = 'fadeIn 0.6s ease-out';
+            }
+
+          }
+        });
+      }
+
+      // Close loader on click
+      const loaderEl = document.getElementById('global-loader');
+      if (loaderEl) {
+        loaderEl.addEventListener('click', () => {
+          loaderEl.classList.remove('visible');
+          loaderEl.classList.add('fade-out');
+        });
+      }
+
+    })();
+  </script>
+</body>
+
+</html>
